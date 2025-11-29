@@ -1,5 +1,6 @@
 import pygame
 import time
+import random
 
 pygame.init()
 
@@ -17,9 +18,10 @@ car_img = pygame.image.load("CarRace/img/car1.png")
 grass = pygame.image.load("CarRace/img/grass.jpg")
 yellow_line = pygame.image.load("CarRace/img/yellow_line.jpg")
 white_line = pygame.image.load("CarRace/img/white_line.jpg")
+enemy_car_images = [pygame.image.load("CarRace/img/car2.png"), pygame.image.load("CarRace/img/car3.png")]
 
 # car class
-class car():
+class Car():
     def __init__(self,x,y):
         self.x = x
         self.y = y
@@ -29,6 +31,33 @@ class car():
     
     def draw(self,window):
         window.blit(car_img, (self.x,self.y))
+
+# enemy car class
+class EnemyCar(Car):
+    def __init__(self, x, y, img):
+        self.x = x
+        self.y = y
+        self.img = img
+        self.width = 28
+        self.height = 69
+        self.vel = 2
+    
+    def move(self):
+        self.y += self.vel
+
+    def draw(self, window):
+        window.blit(self.img, (self.x, self.y))
+
+# create a list of enemy cars
+enemy_cars = []
+
+# create enemy cars and add them to the list
+for i in range(3):
+    x = random.randint(100, 400-20) # between 2 white lines
+    y = random.randint(-500,-50) # the cars should not spawn like zombies (if we give values b/w 0 and window_width) - so the car should be spawned some where above the window starts and then it should reach window
+    img = random.choice(enemy_car_images)
+    enemy_car = EnemyCar(x,y,img)
+    enemy_cars.append(enemy_car)
 
 # drawing background
 def drawing_background():
@@ -48,10 +77,15 @@ def DrawInGameLoop():
     window.fill((136,134,134)) # similar to gray - window.fill("gray")
     drawing_background()
     maincar.draw(window)
+
+    # draw all enemy cars
+    for enemy_car in enemy_cars:
+        enemy_car.draw(window)
+
     pygame.display.flip()
     
 # creating objects
-maincar = car(250,250)
+maincar = Car(250,250)
 
 # crash condition
 def crash():
@@ -59,8 +93,18 @@ def crash():
     window.blit(text, (95,250))
     pygame.display.flip()
     time.sleep(2) # its better than pygame's delay function coz delay function will delay the game but the sleep function will completly makes the game sleep (everything stop executing)
+    
+    # reset the position of the main car
     maincar.x = 250
     maincar.y = 250
+
+    # reset the position and speed of all enemy cars
+    for enemy_car in enemy_cars:
+        enemy_car.x = random.randint(100, 400 - 28)
+        enemy_car.y = random.randint(-500, -50)
+        enemy_car.img = random.choice(enemy_car_images)
+        enemy_car.vel = 2
+
     game_loop()
 
 # game loop
@@ -86,6 +130,24 @@ def game_loop():
             maincar.y -= maincar.vel
         elif keys[pygame.K_DOWN] and maincar.y < w_height-maincar.height:
             maincar.y += maincar.vel
+
+        # move all enemy cars
+        for enemy_car in enemy_cars:
+            enemy_car.move()
+
+            # check for collision with main car
+            if (enemy_car.x < maincar.x + maincar.width and
+                enemy_car.x + enemy_car.width > maincar.x and
+                enemy_car.y < maincar.y + maincar.height and
+                enemy_car.y + enemy_car.height > maincar.y):
+                crash()
+
+            # if enemy car goes off the screen, reset its position
+            if enemy_car.y > w_height:
+                enemy_car.x = random.randint(100, 400-28)
+                enemy_car.y = random.randint(-500, -50)
+                enemy_car.img = random.choice(enemy_car_images)
+                enemy_car.vel = 2
 
         DrawInGameLoop()
 game_loop()

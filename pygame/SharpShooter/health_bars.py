@@ -228,8 +228,8 @@ while done:
         #     y+=vel
         if keys[pygame.K_UP]:
             soldier.is_jump = True
-            soldier.right = False
-            soldier.left = False
+            # soldier.right = False
+            # soldier.left = False
     else:
         if soldier.is_jump:
             if soldier.jump_count >= -10:
